@@ -1,7 +1,7 @@
 import pygame
 import math
-from src.models.Bullet import Bullet
-from src.config import *
+from models.Bullet import Bullet
+from config import *
 
 class Player(pygame.sprite.Sprite):
     def __init__(self, x:int, y:int):

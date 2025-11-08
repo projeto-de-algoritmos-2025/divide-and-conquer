@@ -1,7 +1,7 @@
 # --- ⚙️ Configurações de Janela e Jogo ---
 LARGURA_TELA = 800
 ALTURA_TELA = 600
-FPS = 60
+FPS = 100
 TITULO = "Deep Impact: Asteroid Fusion"
 
 # --- Cores (usando RGB) ---

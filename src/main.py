@@ -1,6 +1,6 @@
-from src.models.Player import Player
-from src.models.Asteroid import Asteroid
-from src.config import *
+from models.Player import Player
+from models.Asteroid import Asteroid
+from config import *
 import pygame
 import sys
 import random
@@ -54,7 +54,7 @@ def collision_detection(jogador, asteroides, balas, all_sprites, game_over, scor
     return game_over, score
 
 def spawn_asteroids(asteroides, all_sprites, spawn_timer):
-    if len(asteroides) < 10 and spawn_timer == 120:
+    if len(asteroides) < 10 and spawn_timer == FPS:
         # choices = 10
         # 1s = 5 => 50%
         # 2s = 3 => 30%
@@ -110,38 +110,56 @@ def main():
                     projetil = jogador.atirar()
                     balas.add(projetil)
                     all_sprites.add(projetil)
+            elif game_over and event.type == pygame.KEYDOWN:
+                if event.key in [pygame.K_RETURN, pygame.K_KP_ENTER]:
+                    running = False
+
+        if not game_over:
+            # Spawn de Asteroides, limitado a 10 na tela
+            # Como o FPS é 60, spawn_timer == 120 significa um spawn a cada 2 segundos
+            spawn_asteroids(asteroides, all_sprites, spawn_timer)
+            
+            teclas = pygame.key.get_pressed()
+            jogador.handle_input(teclas)
+
+            game_over, score = collision_detection(jogador, asteroides, balas, all_sprites, game_over, score)
+
+            # Atualização das nossas entidades
+            all_sprites.update()
+
+            # Renderização
+            tela.fill(PRETO)
+            all_sprites.draw(tela)
+
+            # Atualiza a Tela
+            pygame.display.flip()
+
+            # Controla o FPS
+            clock.tick(FPS)
+
+            spawn_timer += 1
+            spawn_timer %= FPS + 1
         
-        if game_over:
-            break
-        # Spawn de Asteroides, limitado a 10 na tela
-        # Como o FPS é 60, spawn_timer == 120 significa um spawn a cada 2 segundos
-        spawn_asteroids(asteroides, all_sprites, spawn_timer)
-        
-        teclas = pygame.key.get_pressed()
-        jogador.handle_input(teclas)
-
-        game_over, score = collision_detection(jogador, asteroides, balas, all_sprites, game_over, score)
-
-        # Atualização das nossas entidades
-        all_sprites.update()
-
-        # Renderização
         tela.fill(PRETO)
         all_sprites.draw(tela)
 
-        texto_angulo = f"Ângulo: {int((jogador.angle + 90) % 360)}°"
-        
-        # Desenha o texto no canto superior esquerdo (ex: 10, 10)
+        # Desenha o Placar
+        texto_angulo = f"Ângulo: {int((jogador.angle + 90) % 360)}°"       
         desenhar_texto(tela, texto_angulo, fonte_placar, 10, 10)
+        texto_score = f"Pontos: {score}"
+        desenhar_texto(tela, texto_score, fonte_placar, LARGURA_TELA - 150, 10)
+        
+        if game_over:
+            texto_fim = "GAME OVER"
+            # Fonte um pouco maior para Game Over
+            fonte_game_over = pygame.font.Font(None, 64) 
+            desenhar_texto(tela, texto_fim, fonte_game_over, LARGURA_TELA // 2 - 150, ALTURA_TELA // 2 - 32, VERMELHO_ALERTA)
 
         # Atualiza a Tela
         pygame.display.flip()
 
         # Controla o FPS
         clock.tick(FPS)
-
-        spawn_timer += 1
-        spawn_timer %= 121
-    
+        
 if __name__ == "__main__":
     main()
