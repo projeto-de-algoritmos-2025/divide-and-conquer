@@ -7,8 +7,8 @@ class Asteroid(pygame.sprite.Sprite):
     # Mapeamento do número (tamanho) aos atributos de nível
     TAMANHOS = {
         3: {"nivel": "Grande", "raio": 120, "velocidade_max": 1}, # asteroid3.png
-        2: {"nivel": "Medio", "raio": 40, "velocidade_max": 2}, # asteroid2.png
-        1: {"nivel": "Pequeno", "raio": 10, "velocidade_max": 3} # asteroid1.png
+        2: {"nivel": "Medio", "raio": 60, "velocidade_max": 2}, # asteroid2.png
+        1: {"nivel": "Pequeno", "raio": 20, "velocidade_max": 3} # asteroid1.png
     }
 
     def __init__(self, size:int):
@@ -33,7 +33,7 @@ class Asteroid(pygame.sprite.Sprite):
         
         # Escolhendo a imagem do asteroide
         self.original_image = pygame.image.load(f"src/assets/asteroid{size}.png").convert_alpha()
-        self.original_image = pygame.transform.scale(self.original_image, (self.raio*2, self.raio*2))
+        self.original_image = pygame.transform.scale(self.original_image, (self.raio, self.raio))
         self.image = self.original_image
         self.rect = self.image.get_rect(center=(int(self.x), int(self.y)))
     

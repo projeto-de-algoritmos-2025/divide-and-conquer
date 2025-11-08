@@ -6,7 +6,7 @@ from src.config import *
 class Player(pygame.sprite.Sprite):
     def __init__(self, x:int, y:int):
         super().__init__()
-        self.raio = 15
+        self.raio = 20
 
         # começar nas coordenadas dadas
         self.x = float(x)
@@ -22,8 +22,9 @@ class Player(pygame.sprite.Sprite):
         self.sin_angle = 0
 
         self.original_image = pygame.image.load("src/assets/player.png").convert_alpha()
-        self.original_image = pygame.transform.scale(self.original_image, (self.raio*2, self.raio*2))
+        self.original_image = pygame.transform.scale(self.original_image, (self.raio, self.raio))
         self.image = self.original_image
+        self.rect = self.image.get_rect(center=(int(self.x), int(self.y)))
 
     def handle_input(self, keys):
         # Rotação
@@ -56,6 +57,7 @@ class Player(pygame.sprite.Sprite):
         pos_y_tiro = self.y + self.raio * math.sin(angle_rad + 270)
 
         return Bullet(pos_x_tiro, pos_y_tiro, angle_rad)
+    
     def update(self):
         # rotacionando o player
         self.image = pygame.transform.rotate(self.original_image, self.angle)
