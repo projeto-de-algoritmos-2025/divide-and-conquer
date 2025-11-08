@@ -1,4 +1,5 @@
 from src.models.Player import Player
+from src.models.Asteroid import Asteroid
 from src.config import *
 import pygame
 import sys
@@ -10,6 +11,14 @@ def desenhar_texto(surface, text, font, x, y, color=BRANCO):
     text_rect = text_surface.get_rect()
     text_rect.topleft = (x, y)
     surface.blit(text_surface, text_rect)
+
+def start_asteroid_field(asteroides, all_sprites):
+    NUM_ASTEROIDES_INICIAIS = 4 
+    for _ in range(NUM_ASTEROIDES_INICIAIS):
+        # O construtor sem x, y gera o asteroide fora da tela
+        ast = Asteroid(size=random.choice([2, 3])) # Começa com Médio e Grande
+        asteroides.add(ast)
+        all_sprites.add(ast)
 
 def main():
     # Inicialização do Pygame
@@ -32,8 +41,11 @@ def main():
     all_sprites = pygame.sprite.Group()
     all_sprites.add(jogador)
 
+    start_asteroid_field(asteroides, all_sprites)
+
     # Loop Principal do Jogo
     running = True
+    spawn_timer = 0
     while running:
         # Processando eventos
         for event in pygame.event.get():
@@ -45,6 +57,16 @@ def main():
                     balas.add(projetil)
                     all_sprites.add(projetil)
         
+        # Spawn de Asteroides, limitado a 10 na tela
+        # Como o FPS é 60, spawn_timer == 120 significa um spawn a cada 2 segundos
+        if len(asteroides) < 10 and spawn_timer == 120:
+            # choices = 10
+            # 1s = 5 => 50%
+            # 2s = 3 => 30%
+            # 3s = 2 => 20%
+            novo_asteroide = Asteroid(random.choice([1, 1, 1, 1, 1, 2, 2, 2, 3, 3]))
+            asteroides.add(novo_asteroide)
+            all_sprites.add(novo_asteroide)
         
         teclas = pygame.key.get_pressed()
         jogador.handle_input(teclas)
@@ -66,6 +88,9 @@ def main():
 
         # Controla o FPS
         clock.tick(FPS)
+
+        spawn_timer += 1
+        spawn_timer %= 121
 
     pygame.quit()
 
