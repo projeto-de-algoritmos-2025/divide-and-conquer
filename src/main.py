@@ -2,10 +2,27 @@ from models.Player import Player
 from models.Asteroid import Asteroid
 from config import *
 import pygame
-import sys
 import random
-import math 
 from time import sleep
+
+def desenhar_placar(surface, jogador, score, font, life_icon_img, game_over, tela, fonte_placar):
+    texto_angulo = f"Ângulo: {int((jogador.angle + PROPULSION_OFFSET) % 360)}°"       
+    desenhar_texto(tela, texto_angulo, fonte_placar, 10, 10)
+    texto_score = f"Pontos: {score}"
+    desenhar_texto(tela, texto_score, fonte_placar, LARGURA_TELA - 200, 15)
+    desenhar_texto(tela, "Vidas:", fonte_placar, LARGURA_TELA - 200, 50)
+    # icone pra cada vida
+    start_x = LARGURA_TELA - 140
+    y = 45 # Na mesma linha do rótulo "Vidas:"
+    for i in range(jogador.vidas):
+        x = start_x + (i * (LIFE_ICON_SIZE + 5)) # 5 pixels de espaçamento
+        tela.blit(life_icon_img, (x, y))
+
+    if game_over:
+        texto_fim = "GAME OVER"
+        # Fonte um pouco maior para Game Over
+        fonte_game_over = pygame.font.Font(None, 64) 
+        desenhar_texto(tela, texto_fim, fonte_game_over, LARGURA_TELA // 2 - 150, ALTURA_TELA // 2 - 32, VERMELHO_ALERTA)
 
 def desenhar_texto(surface, text, font, x, y, color=BRANCO):
     text_surface = font.render(text, True, color)
@@ -13,7 +30,7 @@ def desenhar_texto(surface, text, font, x, y, color=BRANCO):
     text_rect.topleft = (x, y)
     surface.blit(text_surface, text_rect)
 
-def collision_detection(jogador, asteroides, balas, all_sprites, game_over, score):
+def collision_detection(jogador, asteroides, balas, all_sprites, game_over, score, vulnerable):
     # Colisão: Bala vs. Asteroide 
     # True, False: Destrói a bala, mas não o asteroide para processar o split primeiro.
     colisoes_bala_ast = pygame.sprite.groupcollide(
@@ -47,24 +64,30 @@ def collision_detection(jogador, asteroides, balas, all_sprites, game_over, scor
         pygame.sprite.collide_circle
     )
 
-    if colisoes_jogador_ast:
+    if colisoes_jogador_ast and jogador.vidas <= 0:
         game_over = True
         jogador.kill() 
-
+    elif colisoes_jogador_ast and jogador.vidas > 0:
+        if not vulnerable["is_vulneravel"]:
+            return game_over, score  # Ignora a colisão se estiver invulnerável
+        jogador.vidas -= 1
+        # Reposiciona o jogador no centro da tela
+        jogador.x = LARGURA_TELA // 2
+        jogador.y = ALTURA_TELA // 2
+        jogador.vx = 0
+        jogador.vy = 0
+        jogador.angle = 0
+        vulnerable["is_vulneravel"] = False
+        vulnerable["tempo_invulneravel"] = JANELA_INVULNERABILIDADE
     return game_over, score
 
 def spawn_asteroids(asteroides, all_sprites, spawn_timer):
-    if len(asteroides) < 10 and spawn_timer == FPS:
-        # choices = 10
-        # 1s = 5 => 50%
-        # 2s = 3 => 30%
-        # 3s = 2 => 20%
-        novo_asteroide = Asteroid(random.choice([1, 1, 1, 1, 1, 2, 2, 2, 3, 3]))
+    if len(asteroides) < ASTEROIDES_MAXIMOS_TELA and spawn_timer == FPS:
+        novo_asteroide = Asteroid(random.choice(PROBABILIDADE_ASTEROIDES))
         asteroides.add(novo_asteroide)
         all_sprites.add(novo_asteroide)
 
 def start_asteroid_field(asteroides, all_sprites):
-    NUM_ASTEROIDES_INICIAIS = 4 
     for _ in range(NUM_ASTEROIDES_INICIAIS):
         # O construtor sem x, y gera o asteroide fora da tela
         ast = Asteroid(size=random.choice([2, 3])) # Começa com Médio e Grande
@@ -83,10 +106,7 @@ def main():
     # Taxa de Quadros (FPS)
     clock = pygame.time.Clock()
 
-    try:
-        fonte_placar = pygame.font.Font(None, 24) 
-    except:
-        fonte_placar = pygame.font.SysFont("monospace", 24)
+    fonte_placar = pygame.font.Font(None, 24) 
 
     # Grupo de Sprites
     jogador = Player(LARGURA_TELA // 2, ALTURA_TELA // 2)
@@ -94,12 +114,15 @@ def main():
     asteroides = pygame.sprite.Group()
     all_sprites = pygame.sprite.Group()
     all_sprites.add(jogador)
+    life_icon_img = pygame.image.load(LIFE_ICON_PATH).convert_alpha()
+    life_icon_img = pygame.transform.scale(life_icon_img, (LIFE_ICON_SIZE, LIFE_ICON_SIZE))
 
     start_asteroid_field(asteroides, all_sprites)
 
     # Loop Principal do Jogo
     running = True
     spawn_timer = 0
+    vulnerable = {"is_vulneravel": True, "tempo_invulneravel": 0}  # Jogador começa vulnerável
     while running:
         # Processando eventos
         for event in pygame.event.get():
@@ -115,14 +138,19 @@ def main():
                     running = False
 
         if not game_over:
-            # Spawn de Asteroides, limitado a 10 na tela
-            # Como o FPS é 60, spawn_timer == 120 significa um spawn a cada 2 segundos
+            # Spawn de Asteroides, limitado a uma certa quantidade na tela
             spawn_asteroids(asteroides, all_sprites, spawn_timer)
             
             teclas = pygame.key.get_pressed()
             jogador.handle_input(teclas)
 
-            game_over, score = collision_detection(jogador, asteroides, balas, all_sprites, game_over, score)
+            game_over, score = collision_detection(jogador, asteroides, balas, all_sprites, game_over, score, vulnerable)
+
+            # Atualiza o estado de invulnerabilidade
+            if not vulnerable["is_vulneravel"]:
+                vulnerable["tempo_invulneravel"] = max(0, vulnerable["tempo_invulneravel"] - 1) # Decrementa por 1 frame
+                if vulnerable["tempo_invulneravel"] == 0:
+                    vulnerable["is_vulneravel"] = True
 
             # Atualização das nossas entidades
             all_sprites.update()
@@ -144,21 +172,11 @@ def main():
         all_sprites.draw(tela)
 
         # Desenha o Placar
-        texto_angulo = f"Ângulo: {int((jogador.angle + 90) % 360)}°"       
-        desenhar_texto(tela, texto_angulo, fonte_placar, 10, 10)
-        texto_score = f"Pontos: {score}"
-        desenhar_texto(tela, texto_score, fonte_placar, LARGURA_TELA - 150, 10)
-        
-        if game_over:
-            texto_fim = "GAME OVER"
-            # Fonte um pouco maior para Game Over
-            fonte_game_over = pygame.font.Font(None, 64) 
-            desenhar_texto(tela, texto_fim, fonte_game_over, LARGURA_TELA // 2 - 150, ALTURA_TELA // 2 - 32, VERMELHO_ALERTA)
+        desenhar_placar(tela, jogador, score, fonte_placar, life_icon_img, game_over, tela, fonte_placar)
 
         # Atualiza a Tela
         pygame.display.flip()
 
-        # Controla o FPS
         clock.tick(FPS)
         
 if __name__ == "__main__":

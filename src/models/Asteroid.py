@@ -4,19 +4,12 @@ import math
 from config import *
 
 class Asteroid(pygame.sprite.Sprite):
-    # Mapeamento do número (tamanho) aos atributos de nível
-    TAMANHOS = {
-        3: {"nivel": "Grande", "raio": 120, "velocidade_max": 1}, # asteroid3.png
-        2: {"nivel": "Medio", "raio": 60, "velocidade_max": 2}, # asteroid2.png
-        1: {"nivel": "Pequeno", "raio": 20, "velocidade_max": 3} # asteroid1.png
-    }
-
     def __init__(self, size:int, x=None, y=None, vx=None, vy=None):
         super().__init__()
         
         # Definindo atributos com base no tamanho
         self.size = size
-        props = self.TAMANHOS.get(size, self.TAMANHOS[size]) 
+        props = TIPO_ASTEROIDE[size]
         self.nivel = props["nivel"]
         self.raio = props["raio"]
         self.velocidade_max = props["velocidade_max"]

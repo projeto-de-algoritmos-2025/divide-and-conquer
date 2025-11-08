@@ -6,7 +6,7 @@ from config import *
 class Player(pygame.sprite.Sprite):
     def __init__(self, x:int, y:int):
         super().__init__()
-        self.raio = 20
+        self.raio = PLAYER_SIZE
 
         # começar nas coordenadas dadas
         self.x = float(x)
@@ -21,11 +21,13 @@ class Player(pygame.sprite.Sprite):
         self.cos_angle = 0
         self.sin_angle = 0
 
-        self.original_image = pygame.image.load("src/assets/player.png").convert_alpha()
+        self.original_image = pygame.image.load(PLAYER_ICON).convert_alpha()
         self.original_image = pygame.transform.scale(self.original_image, (self.raio, self.raio))
         self.image = self.original_image
         self.rect = self.image.get_rect(center=(int(self.x), int(self.y)))
         self.rect.inflate_ip(-10, -10)  # reduz o rect para melhorar a colisão
+
+        self.vidas = 4
 
     def handle_input(self, keys):
         # Rotação
@@ -38,12 +40,12 @@ class Player(pygame.sprite.Sprite):
 
         # nossa propulsão
         if keys[pygame.K_UP]:
-            angle_rad = math.radians(self.angle + 90)
+            angle_rad = math.radians(self.angle + PROPULSION_OFFSET)
             # obtendo a aceleração nos eixos x e y
             self.vx += ACELERACAO * math.cos(angle_rad)
             self.vy -= ACELERACAO * math.sin(angle_rad)
         if keys[pygame.K_DOWN]:
-            angle_rad = math.radians(self.angle + 90)
+            angle_rad = math.radians(self.angle + PROPULSION_OFFSET)
             # obtendo a aceleração nos eixos x e y
             self.vx -= ACELERACAO * math.cos(angle_rad)
             self.vy += ACELERACAO * math.sin(angle_rad)
@@ -53,8 +55,8 @@ class Player(pygame.sprite.Sprite):
         angle_rad = math.radians(self.angle + 270)
         
         # Posição inicial da bala deve ser na ponta da nave
-        pos_x_tiro = self.x - self.raio * math.cos(angle_rad + 270)
-        pos_y_tiro = self.y + self.raio * math.sin(angle_rad + 270)
+        pos_x_tiro = self.x - self.raio * math.cos(angle_rad + PROPULSION_OFFSET*3)
+        pos_y_tiro = self.y + self.raio * math.sin(angle_rad + PROPULSION_OFFSET*3)
 
         return Bullet(pos_x_tiro, pos_y_tiro, angle_rad)
     

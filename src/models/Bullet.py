@@ -13,8 +13,8 @@ class Bullet(pygame.sprite.Sprite):
         self.vx = -VELOCIDADE_BALA * math.cos(angle_rad)
         self.vy = VELOCIDADE_BALA * math.sin(angle_rad)
 
-        self.tamanho = 4
-        self.vida = 60  
+        self.tamanho = TAMANHO_BALA
+        self.vida = VIDA_BALA
 
         self.image = pygame.Surface((self.tamanho, self.tamanho), pygame.SRCALPHA)
         pygame.draw.circle(self.image, BRANCO, (self.tamanho // 2, self.tamanho // 2), self.tamanho // 2, self.tamanho // 2)
