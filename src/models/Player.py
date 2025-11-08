@@ -25,6 +25,7 @@ class Player(pygame.sprite.Sprite):
         self.original_image = pygame.transform.scale(self.original_image, (self.raio, self.raio))
         self.image = self.original_image
         self.rect = self.image.get_rect(center=(int(self.x), int(self.y)))
+        self.rect.inflate_ip(-10, -10)  # reduz o rect para melhorar a colisão
 
     def handle_input(self, keys):
         # Rotação
@@ -41,7 +42,6 @@ class Player(pygame.sprite.Sprite):
             # obtendo a aceleração nos eixos x e y
             self.vx += ACELERACAO * math.cos(angle_rad)
             self.vy -= ACELERACAO * math.sin(angle_rad)
-        # nossa propulsão
         if keys[pygame.K_DOWN]:
             angle_rad = math.radians(self.angle + 90)
             # obtendo a aceleração nos eixos x e y

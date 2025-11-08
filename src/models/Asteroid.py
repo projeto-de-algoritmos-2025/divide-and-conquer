@@ -16,10 +16,11 @@ class Asteroid(pygame.sprite.Sprite):
         
         # Definindo atributos com base no tamanho
         self.size = size
-        props = self.TAMANHOS.get(size, self.TAMANHOS[3]) 
+        props = self.TAMANHOS.get(size, self.TAMANHOS[size]) 
         self.nivel = props["nivel"]
         self.raio = props["raio"]
         self.velocidade_max = props["velocidade_max"]
+        hitbox_deflate = -(3.5**size) - 8
 
         # gerando posição inicial
         if x is None or y is None:
@@ -39,11 +40,12 @@ class Asteroid(pygame.sprite.Sprite):
         self.angle = random.uniform(0, 360) 
         self.rot_speed = random.uniform(-1, 1) # Velocidade de rotação visual
         
-        # Escolhendo a imagem do asteroide
+        # Definindo a imagem do asteroide
         self.original_image = pygame.image.load(f"src/assets/asteroid{size}.png").convert_alpha()
         self.original_image = pygame.transform.scale(self.original_image, (self.raio, self.raio))
         self.image = self.original_image
         self.rect = self.image.get_rect(center=(int(self.x), int(self.y)))
+        self.rect.inflate_ip(hitbox_deflate, hitbox_deflate)  # reduz o rect para melhorar a colisão
     
     def _generate_initial_velocity(self):
         angle_rad = random.uniform(0, 2 * math.pi)
@@ -56,7 +58,7 @@ class Asteroid(pygame.sprite.Sprite):
     def _generate_initial_coordinates(self):
         side = random.choice(['top', 'bottom', 'left', 'right'])
         
-        # A posição inicial é calculado pra fora da borda, para garantir que 
+        # A posição inicial é calculada pra fora da borda, para garantir que 
         # o asteroide inteiro comece fora e entre na tela gradualmente.
         if side == 'top':
             # y = 0 - tamanho do asteroide
@@ -90,8 +92,6 @@ class Asteroid(pygame.sprite.Sprite):
         if new_size < 1:
             return novos_asteroides
         
-        props_new = self.TAMANHOS[new_size]
-        novo_raio = props_new["raio"]
         base_vel = self.velocidade_max + 1
 
         # depois de destruido, ele vai para uma direção aleatória
@@ -99,15 +99,15 @@ class Asteroid(pygame.sprite.Sprite):
         push_angle_rad = base_angle_rad
 
         for _ in range(2):
-            vx = base_vel * math.cos(push_angle_rad)
-            vy = base_vel * math.sin(push_angle_rad)
-            novos_asteroides.append(Asteroid(new_size, x=self.x, y=self.y, vx=vx, vy=vy))
+            new_vx = base_vel * math.cos(push_angle_rad)
+            new_vy = base_vel * math.sin(push_angle_rad)
+            novos_asteroides.append(Asteroid(new_size, x=self.x, y=self.y, vx=new_vx, vy=new_vy))
             push_angle_rad += math.pi # varia 180 graus para o próximo asteroide
 
         return novos_asteroides
 
     def update(self):
-        # Atualiza a Posição (Movimento)
+        # Atualiza a Posição 
         self.x += self.vx
         self.y += self.vy
 
@@ -124,7 +124,7 @@ class Asteroid(pygame.sprite.Sprite):
         elif self.y < -self.raio:
             self.y = ALTURA_TELA + self.raio
         
-        # Atualiza a rotação, dentro entre 0 e 360 graus
+        # Atualiza a rotação, entre 0 e 360 graus
         self.angle += self.rot_speed
         self.angle %= 360
         
