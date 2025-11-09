@@ -70,7 +70,30 @@ def desenhar_texto(surface, text, font, x, y, color=BRANCO):
     text_rect.topleft = (x, y)
     surface.blit(text_surface, text_rect)
 
-def collision_detection(jogador, asteroides, balas, all_sprites, game_over, score, vulneravel):
+def player_collision(jogador, asteroides, game_over, vulneravel):
+    # Colisão: Jogador vs. Asteroide 
+    colisoes_jogador_ast = pygame.sprite.spritecollide(
+        jogador, asteroides, False, 
+        pygame.sprite.collide_circle
+    )
+
+    if colisoes_jogador_ast and jogador.vidas <= 0:
+        return True  # Game Over
+    elif colisoes_jogador_ast and jogador.vidas > 0:
+        if not vulneravel["is_vulneravel"]:
+            return None  # Ignora a colisão se estiver invulnerável
+        jogador.vidas -= 1
+        # Reposiciona o jogador no centro da tela
+        jogador.x = LARGURA_TELA // 2
+        jogador.y = ALTURA_TELA // 2
+        jogador.vx = 0
+        jogador.vy = 0
+        jogador.angle = 0
+        vulneravel["is_vulneravel"] = False
+        vulneravel["janela_invulneravel"] = JANELA_INVULNERABILIDADE
+        return False
+
+def bullet_collision(balas, asteroides, all_sprites, score):
     # Colisão: Bala vs. Asteroide 
     # True, False: Destrói a bala, mas não o asteroide pq a gnt vai processar ele no split primeiro.
     colisoes_bala_ast = pygame.sprite.groupcollide(
@@ -92,28 +115,17 @@ def collision_detection(jogador, asteroides, balas, all_sprites, game_over, scor
             
             # Remove o asteroide original
             asteroide_atingido.kill()
-        
-    # Colisão: Jogador vs. Asteroide 
-    colisoes_jogador_ast = pygame.sprite.spritecollide(
-        jogador, asteroides, False, 
-        pygame.sprite.collide_circle
-    )
 
-    if colisoes_jogador_ast and jogador.vidas <= 0:
+    return score
+
+def collision_detection(jogador, asteroides, balas, all_sprites, game_over, score, vulneravel, asteroide_a, asteroide_b):
+
+    score = bullet_collision(balas, asteroides, all_sprites, score)
+
+
+    if player_collision(jogador, asteroides, game_over, vulneravel):
         game_over = True
-        jogador.kill() 
-    elif colisoes_jogador_ast and jogador.vidas > 0:
-        if not vulneravel["is_vulneravel"]:
-            return game_over, score  # Ignora a colisão se estiver invulnerável
-        jogador.vidas -= 1
-        # Reposiciona o jogador no centro da tela
-        jogador.x = LARGURA_TELA // 2
-        jogador.y = ALTURA_TELA // 2
-        jogador.vx = 0
-        jogador.vy = 0
-        jogador.angle = 0
-        vulneravel["is_vulneravel"] = False
-        vulneravel["janela_invulneravel"] = JANELA_INVULNERABILIDADE
+
     return game_over, score
 
 def spawn_asteroides(asteroides, all_sprites, spawn_timer):
@@ -148,7 +160,6 @@ def main():
     d_min_atual = INF
     game_over = False
     running = True
-    in_fusion = False
     score = 0
     closest_pair_timer = 0
     spawn_timer = 0
@@ -176,23 +187,22 @@ def main():
             teclas = pygame.key.get_pressed()
             jogador.handle_input(teclas)
 
-            game_over, score = collision_detection(jogador, asteroides, balas, all_sprites, game_over, score, vulneravel)
+            # calcula o par de asteroides mais proximos
+            asteroides_ativos = list(asteroides)
+            if len(asteroides_ativos) >= 2:
+                d_min_atual, asteroide_a, asteroide_b = closest_pair(asteroides_ativos)
+            else:
+                d_min_atual = INF
+                asteroide_a = None
+                asteroide_b = None
 
-            # Atualiza o estado de invulnerabilidade
+            game_over, score = collision_detection(jogador, asteroides, balas, all_sprites, game_over, score, vulneravel, asteroide_a, asteroide_b)
+
+            # Atualiza o estado de invulnerabilidade se o jogador colidiu com um asteroide
             if not vulneravel["is_vulneravel"]:
                 vulneravel["janela_invulneravel"] = max(0, vulneravel["janela_invulneravel"] - 1) # Decrementa por 1 frame
                 if vulneravel["janela_invulneravel"] == 0:
                     vulneravel["is_vulneravel"] = True
-
-            if not in_fusion:
-                # calcula o par de asteroides mais proximos
-                asteroides_ativos = list(asteroides)
-                if len(asteroides_ativos) >= 2:
-                    d_min_atual, asteroide_a, asteroide_b = closest_pair(asteroides_ativos)
-                else:
-                    d_min_atual = INF
-                    asteroide_a = None
-                    asteroide_b = None
 
             # Chamando o update de todos os sprites
             all_sprites.update()
