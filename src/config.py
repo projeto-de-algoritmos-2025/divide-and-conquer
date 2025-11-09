@@ -23,7 +23,7 @@ TIPO_ASTEROIDE = {
 ASTEROIDES_MAXIMOS_TELA = int((LARGURA_TELA / ALTURA_TELA) * 10)
 MAX_ASTEROIDES_TELA = 40
 PROBABILIDADE_ASTEROIDES = [1, 2, 2, 2, 2, 3, 3, 3, 3, 3] # 1's = 1/10 => 10%, 2's = 4/10 => 40%, 3's = 5/10 => 50%
-ALERTA_COLISAO = 150  # distância para alerta de colisão
+ALERTA_COLISAO = 100  # distância para alerta de colisão
 INTERVALO_CALCULO_PARES = FPS * 3
 
 # --- Configurações das Balas ---
