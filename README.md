@@ -83,7 +83,7 @@ As principais configurações do jogo podem ser ajustadas em src/config.py:
 
 ## Apresentação
 
-A apresentação do projeto pode ser acessada [aqui]().
+A apresentação do projeto pode ser acessada [aqui](https://www.youtube.com/watch?v=iGnCeVRqP4M).
 
 ## Guia de Instalação
 
